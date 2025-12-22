@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.ratelimiter</groupId>
 	<artifactId>distributed-rate-limiter</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0.3217-SNAPSHOT</version>
 	<name>distributed-rate-limiter</name>
 	<description>Distributed rate limiter to limit request for a distributed system</description>
 	<url/>
