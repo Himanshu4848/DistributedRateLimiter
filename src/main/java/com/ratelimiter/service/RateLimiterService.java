@@ -8,6 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import static com.ratelimiter.constants.CommonConstants.DEFAULT_USER_KEY;
+import static com.ratelimiter.constants.CommonConstants.GLOBAL_REDIS_BASE_KEY;
+import static com.ratelimiter.constants.CommonConstants.REPLACEMENT;
+import static com.ratelimiter.constants.CommonConstants.SANITIZE_REGEX;
+import static com.ratelimiter.constants.CommonConstants.USER_REDIS_BASE_KEY;
+
 
 @Slf4j
 @Service
@@ -50,8 +56,8 @@ public class RateLimiterService {
             return createAllowedResponse();
         }
         if (globalRateLimitEnabled) {
-            RateLimiterResponse globalResult = checkGlobalRateLimit(rateLimiterRequest.getEndpoint());
 
+            RateLimiterResponse globalResult = checkGlobalRateLimit(rateLimiterRequest.getEndpoint());
             if (!globalResult.isAllowed()) {
                 log.warn("Global rate limit exceeded");
                 globalResult.setIdentifier("global");
@@ -66,7 +72,7 @@ public class RateLimiterService {
 
     private RateLimiterResponse checkGlobalRateLimit(String endpoint) {
         String apiEndpoint = sanitize(endpoint);
-        String globalKey = "rate_limit:global:" + apiEndpoint;
+        String globalKey = GLOBAL_REDIS_BASE_KEY + apiEndpoint;
         log.debug("Checking global rate limit - Key: {}, Limit: {}/{}s",
                 globalKey, globalLimit, globalWindowSeconds);
 
@@ -91,19 +97,19 @@ public class RateLimiterService {
 
     private String buildUserKey(RateLimiterRequest rateLimiterRequest) {
         String identifier = rateLimiterRequest.getIdentifier();
-        String endpoint = sanitize(rateLimiterRequest.getEndpoint());
+        String endPoint = sanitize(rateLimiterRequest.getEndpoint());
         if (identifier == null || identifier.isEmpty()) {
             // Fallback to IP if no identifier
             identifier = "ip:" + rateLimiterRequest.getIpAddress();
         }
-        return "rate_limit:user:" + endpoint + ":" + sanitize(identifier);
+        return USER_REDIS_BASE_KEY + endPoint + ":" + sanitize(identifier);
     }
 
     private String sanitize(String input) {
         if (input == null) {
-            return "unknown";
+            return DEFAULT_USER_KEY;
         }
-        return input.replaceAll("[^a-zA-Z0-9_:.-]", "_");
+        return input.replaceAll(SANITIZE_REGEX, REPLACEMENT);
     }
 
     private RateLimiterResponse createAllowedResponse() {
@@ -115,15 +121,17 @@ public class RateLimiterService {
                 .build();
     }
 
-    public void resetUserRateLimit(String identifier) {
-        String key = "rate_limit:user:" + sanitize(identifier);
+    public void resetUserRateLimit(RateLimiterRequest rateLimiterRequest) {
+        String endPoint = sanitize(rateLimiterRequest.getEndpoint());
+        String key = USER_REDIS_BASE_KEY + endPoint + ":" + sanitize(rateLimiterRequest.getIdentifier());
         tokenBucketAlgorithm.reset(key);
-        log.info("Reset user rate limit for: {}", identifier);
+        log.info("Reset user rate limit for: {}", rateLimiterRequest.getUserId());
     }
 
-    public void resetGlobalRateLimit() {
-        String key = "rate_limit:global:api";
-        tokenBucketAlgorithm.reset(key);
-        log.info("Reset global rate limit");
+    public void resetGlobalRateLimit(String apiEndPoint) {
+        String apiEndpoint = sanitize(apiEndPoint);
+        String globalKey = GLOBAL_REDIS_BASE_KEY + apiEndpoint;
+        tokenBucketAlgorithm.reset(globalKey);
+        log.info("Reset global rate limit for key:{}",globalKey);
     }
 }
