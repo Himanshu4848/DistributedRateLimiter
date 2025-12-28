@@ -50,7 +50,6 @@ public class RateLimiterService {
      */
     public RateLimiterResponse checkRateLimit(RateLimiterRequest rateLimiterRequest) {
 
-        // 1. Check if rate limiter is disabled
         if (!rateLimiterEnabled) {
             log.info("Rate limiter is disabled");
             return createAllowedResponse();
