@@ -81,7 +81,7 @@ public class TokenBucketAlgorithm {
                     String.valueOf(currentTime)
             );
             // Parse result from Lua script
-            if (result == null || result.size() != 3) {
+            if (result.size() != 3) {
                 log.error("Unexpected Redis response for key: {}", key);
                 // Fail open - allow request if Redis has issues
                 return RateLimiterResponse.allowed(limit, limit, currentTime + windowSeconds);
