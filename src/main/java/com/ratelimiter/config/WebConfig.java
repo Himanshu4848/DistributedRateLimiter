@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/**"
                 )
                 // Exclude these patterns (no rate limiting)
-                .excludePathPatterns("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/error");
+                .excludePathPatterns("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/error","/admin/rate-limiter");
         log.info("RateLimitInterceptor registered successfully");
     }
 }

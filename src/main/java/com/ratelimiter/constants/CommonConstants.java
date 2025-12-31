@@ -10,4 +10,8 @@ public class CommonConstants {
     public static final String TEST_URL="/test";
     public static final String GET_USER_PRODUCTS="/products";
     public static final String GET_USER="/users";
+    public static final String ADMIN_BASE_URL="/admin/rate-limiter";
+    public static final String RESET_USER_LIMIT="/reset/user";
+    public static final String RESET_GLOBAL_LIMIT="/reset/global";
+    public static final String HEALTH_CHECK_URL="/health";
 }
