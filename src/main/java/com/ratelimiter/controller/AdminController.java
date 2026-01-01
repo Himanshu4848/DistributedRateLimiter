@@ -4,6 +4,7 @@ import com.ratelimiter.requestDto.RateLimiterRequest;
 import com.ratelimiter.service.RateLimiterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +40,7 @@ public class AdminController {
         return response;
     }
 
+    @Transactional
     @PostMapping(RESET_GLOBAL_LIMIT)
     public Map<String, Object> resetGlobalRateLimit(@RequestParam String endpoint) {
         log.info("Resetting global rate limit for endpoint: {}", endpoint);
