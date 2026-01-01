@@ -1,6 +1,7 @@
 package com.ratelimiter.service;
 
 import com.ratelimiter.algorithm.TokenBucketAlgorithm;
+import com.ratelimiter.exception.RateLimitExceededException;
 import com.ratelimiter.requestDto.RateLimiterRequest;
 import com.ratelimiter.responseDto.RateLimiterResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -59,12 +60,15 @@ public class RateLimiterService {
             RateLimiterResponse globalResult = checkGlobalRateLimit(rateLimiterRequest.getEndpoint());
             if (!globalResult.isAllowed()) {
                 log.warn("Global rate limit exceeded");
-                globalResult.setIdentifier("global");
-                globalResult.setReason("Global API rate limit exceeded - too many total requests");
-                return globalResult;
+                globalResult.setReason("Global rate limit exceeded");
+                throw new RateLimitExceededException(globalResult);
             }
         }
         RateLimiterResponse userResult = checkUserRateLimit(rateLimiterRequest);
+        if (!userResult.isAllowed()) {
+            userResult.setReason("User rate limit exceeded");
+            throw new RateLimitExceededException(userResult);
+        }
         userResult.setIdentifier(rateLimiterRequest.getIdentifier());
         return userResult;
     }

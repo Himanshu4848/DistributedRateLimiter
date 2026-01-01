@@ -1,5 +1,6 @@
 package com.ratelimiter.interceptor;
 
+import com.ratelimiter.exception.RateLimitExceededException;
 import com.ratelimiter.requestDto.RateLimiterRequest;
 import com.ratelimiter.responseDto.RateLimiterResponse;
 import com.ratelimiter.service.RateLimiterService;
@@ -29,30 +30,17 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private IdentifierExtractor identifierExtractor;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response,@NonNull Object handler) throws Exception {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,@NonNull Object handler) throws Exception {
 
-        String endpoint = request.getRequestURI();
-
-        // Skip rate limiting for certain endpoints
-        if (shouldSkipRateLimiting(endpoint)) {
-            log.info("Skipping rate limit for endpoint: {}", endpoint);
+        try {
+            RateLimiterRequest rateLimiterRequest = buildRateLimiterRequest(request);
+            RateLimiterResponse result = rateLimiterService.checkRateLimit(rateLimiterRequest);
+            addRateLimitHeaders(response, result);
             return true;
-        }
-
-        // Extract information from request
-        RateLimiterRequest rateLimiterRequest = buildRateLimiterRequest(request);
-
-        log.debug("Rate limit check - Endpoint: {}, Identifier: {}", endpoint, rateLimiterRequest.getIdentifier());
-        RateLimiterResponse rateLimitResult = rateLimiterService.checkRateLimit(rateLimiterRequest);
-        addRateLimitHeaders(response, rateLimitResult);
-
-        if (rateLimitResult.isAllowed()) {
-            log.debug("✓ Request allowed - Identifier: {}, Remaining: {}", rateLimiterRequest.getIdentifier(), rateLimitResult.getRemaining());
-            return true; //this means the request will move to controller level
-        } else {
-            // Request is BLOCKED - return 429
-            log.info("✗ Request blocked - Identifier: {}, Reason: {}", rateLimiterRequest.getIdentifier(), rateLimitResult.getReason());
-            handleRateLimitExceeded(response, rateLimitResult);
+        } catch (RateLimitExceededException ex) {
+            RateLimiterResponse result = ex.getResponse();
+           // addRateLimitHeaders(response, result);
+            handleRateLimitExceeded(response, result);
             return false;
         }
     }
@@ -108,27 +96,23 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private void handleRateLimitExceeded(HttpServletResponse response,
                                          RateLimiterResponse result) throws Exception {
 
-        // Set HTTP status to 429 (Too Many Requests)
         response.setStatus(429);
-        // Set content type to JSON
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        // Build error response JSON
+
+        long now = System.currentTimeMillis() / 1000;
+        long retryAfterSeconds = Math.max(0, result.getResetAt() - now);
+
         String errorJson = String.format("""
-            {
-                "error": "Rate limit exceeded",
-                "message": "%s",
-                "limit": %d,
-                "remaining": %d,
-                "resetAt": %d,
-                "retryAfter": %d
-            }
-            """,
-                result.getReason() != null ? result.getReason() : "Too many requests",
-                result.getLimit(),
-                result.getRemaining(),
-                result.getResetAt(),
-                result.getRetryAfterSeconds()
+        {
+            "allowed": %b,
+            "message": "%s",
+            "retryAfterSeconds": %d
+        }
+        """,
+                result.isAllowed(),
+                result.getReason(),
+                retryAfterSeconds
         );
 
         response.getWriter().write(errorJson);
