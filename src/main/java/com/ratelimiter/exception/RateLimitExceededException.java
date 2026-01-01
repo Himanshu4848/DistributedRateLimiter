@@ -6,15 +6,9 @@ import lombok.Getter;
 @Getter
 public class RateLimitExceededException extends RuntimeException {
 
-    private final RateLimiterResponse rateLimiterResponse;
+    private final RateLimiterResponse response;
 
-    public RateLimitExceededException(String message, RateLimiterResponse rateLimiterResponse) {
-        super(message);
-        this.rateLimiterResponse = rateLimiterResponse;
-    }
-
-    public RateLimitExceededException(RateLimiterResponse rateLimiterResponse) {
-        super("Rate limit exceeded");
-        this.rateLimiterResponse = rateLimiterResponse;
+    public RateLimitExceededException(RateLimiterResponse response) {
+        this.response = response;
     }
 }
