@@ -60,12 +60,12 @@ public class RateLimiterService {
             RateLimiterResponse globalResult = checkGlobalRateLimit(rateLimiterRequest.getEndpoint());
             if (!globalResult.isAllowed()) {
                 log.warn("Global rate limit exceeded");
-                throw new RateLimitExceededException(RateLimiterResponse.blocked(globalLimit, globalResult.getResetAt(), "Global Rate limit exceeded"));
+                throw new RateLimitExceededException(globalResult);
             }
         }
         RateLimiterResponse userResult = checkUserRateLimit(rateLimiterRequest);
         if (!userResult.isAllowed()) {
-            throw new RateLimitExceededException(RateLimiterResponse.blocked(globalLimit, userResult.getResetAt(), "Global Rate limit exceeded"));
+            throw new RateLimitExceededException(userResult);
         }
         userResult.setIdentifier(rateLimiterRequest.getIdentifier());
         return userResult;

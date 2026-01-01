@@ -37,7 +37,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             RateLimiterResponse result = rateLimiterService.checkRateLimit(rateLimiterRequest);
 //            addRateLimitHeaders(response, result);
             return true;
-
         } catch (RateLimitExceededException ex) {
             RateLimiterResponse result = ex.getResponse();
            // addRateLimitHeaders(response, result);
