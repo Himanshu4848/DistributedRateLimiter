@@ -19,7 +19,7 @@ public class GlobalExceptionHandler{
     public ResponseEntity<Map<String, Object>> handleRateLimitExceeded(RateLimitExceededException ex) {
         log.warn("Rate limit exceeded: {}", ex.getMessage());
 
-        RateLimiterResponse result = ex.getRateLimiterResponse();
+        RateLimiterResponse result = ex.getResponse();
 
         Map<String, Object> response = new HashMap<>();
         response.put("error", "Rate limit exceeded");
