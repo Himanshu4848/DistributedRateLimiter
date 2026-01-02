@@ -41,8 +41,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_KEY }}
-          source: "target/rate-limiter.jar"
-          target: "/home/ec2-user/rate-limiter/"
+          source: target/distributed-rate-limiter-*.jar   # ← use wildcard
+          target: /home/ec2-user/rate-limiter/
+          port: 22
 
       # Step 5: Restart service on EC2
       - name: Restart service on EC2
