@@ -45,13 +45,18 @@ jobs:
           target: /home/ec2-user/rate-limiter/
           port: 22
 
-      # Step 5: Restart service on EC2
+      # Step 5: Restart service on EC2 (fixed)
       - name: Restart service on EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_KEY }}
+          port: 22
           script: |
-            pkill -f rate-limiter.jar || true
-            nohup java -jar /home/ec2-user/rate-limiter/rate-limiter.jar > /home/ec2-user/rate-limiter/service.log 2>&1 &
+            # Kill previous JAR if running
+            pkill -f distributed-rate-limiter-*.jar || true
+
+            # Start new JAR in background
+            nohup java -jar /home/ec2-user/rate-limiter/distributed-rate-limiter-*.jar \
+            > /home/ec2-user/rate-limiter/service.log 2>&1 &
