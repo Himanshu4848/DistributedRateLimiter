@@ -27,6 +27,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Make mvnw executable
+        run: chmod +x ./mvnw
+
       # Step 3: Build project
       - name: Build project
         run: ./mvnw clean package
