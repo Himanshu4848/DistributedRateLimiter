@@ -14,4 +14,6 @@ public class CommonConstants {
     public static final String RESET_USER_LIMIT="/reset/user";
     public static final String RESET_GLOBAL_LIMIT="/reset/global";
     public static final String HEALTH_CHECK_URL="/health";
+    public static final String REDIS_HOST="master.rate-limiter-redis.qp3kc1.aps1.cache.amazonaws.com";
+    public static final int REDIS_PORT=6379;
 }
