@@ -1,6 +1,5 @@
 package com.ratelimiter.requestDto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,12 +12,11 @@ import lombok.NoArgsConstructor;
 public class ServiceConfig {
 
     private String name;
-
     private String pathPrefix;
-
     private String targetUrl;
-
     private boolean stripPrefix;
+    private long perUserLimit;
+    private long globalLimit;
 
     public boolean matches(String requestPath) {
         if (requestPath == null || pathPrefix == null) {
