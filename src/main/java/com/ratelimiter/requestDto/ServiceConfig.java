@@ -15,8 +15,8 @@ public class ServiceConfig {
     private String pathPrefix;
     private String targetUrl;
     private boolean stripPrefix;
-    private long perUserLimit;
-    private long globalLimit;
+    private int perUserLimit;
+    private int globalLimit;
 
     public boolean matches(String requestPath) {
         if (requestPath == null || pathPrefix == null) {

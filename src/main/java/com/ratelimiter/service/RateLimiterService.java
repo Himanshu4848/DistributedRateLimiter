@@ -3,6 +3,7 @@ package com.ratelimiter.service;
 import com.ratelimiter.algorithm.TokenBucketAlgorithm;
 import com.ratelimiter.exception.RateLimitExceededException;
 import com.ratelimiter.requestDto.RateLimiterRequest;
+import com.ratelimiter.requestDto.ServiceConfig;
 import com.ratelimiter.responseDto.RateLimiterResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class RateLimiterService {
 
     @Autowired
     private TokenBucketAlgorithm tokenBucketAlgorithm;
+
+    @Autowired
+    private ServiceRegistry serviceRegistry;
 
     // Configuration from application.properties
     @Value("${rate-limiter.enabled:true}")
@@ -74,33 +78,38 @@ public class RateLimiterService {
     }
 
     private RateLimiterResponse checkGlobalRateLimit(String endpoint) {
-        String apiEndpoint = sanitize(endpoint);
+        String requestPath = endpoint.replace("/gateway", "");
+        ServiceConfig targetService = serviceRegistry.findServiceByPath(requestPath);
+        String apiEndpoint = sanitize(requestPath);
         String globalKey = GLOBAL_REDIS_BASE_KEY + apiEndpoint;
         log.debug("Checking global rate limit - Key: {}, Limit: {}/{}s",
-                globalKey, globalLimit, globalWindowSeconds);
+                globalKey, targetService.getGlobalLimit(), globalWindowSeconds);
 
         return tokenBucketAlgorithm.isAllowed(
                 globalKey,
-                globalLimit,
+                targetService.getGlobalLimit(),
                 globalWindowSeconds
         );
     }
 
     private RateLimiterResponse checkUserRateLimit(RateLimiterRequest rateLimiterRequest) {
         // Build key specific to this user
-        String userKey = buildUserKey(rateLimiterRequest);
+        String requestPath = rateLimiterRequest.getEndpoint().replace("/gateway", "");
+        log.info("Request path: {}",requestPath);
+        String userKey = buildUserKey(rateLimiterRequest,requestPath);
+        ServiceConfig targetService = serviceRegistry.findServiceByPath(requestPath);
         log.debug("Checking user rate limit - Key: {}, Limit: {}/{}s", userKey, defaultLimit, defaultWindowSeconds);
 
         return tokenBucketAlgorithm.isAllowed(
                 userKey,
-                defaultLimit,
+                targetService.getPerUserLimit(),
                 defaultWindowSeconds
         );
     }
 
-    private String buildUserKey(RateLimiterRequest rateLimiterRequest) {
+    private String buildUserKey(RateLimiterRequest rateLimiterRequest,String requestPath) {
         String identifier = rateLimiterRequest.getIdentifier();
-        String endPoint = sanitize(rateLimiterRequest.getEndpoint());
+        String endPoint = sanitize(requestPath);
         if (identifier == null || identifier.isEmpty()) {
             // Fallback to IP if no identifier
             identifier = "ip:" + rateLimiterRequest.getIpAddress();
