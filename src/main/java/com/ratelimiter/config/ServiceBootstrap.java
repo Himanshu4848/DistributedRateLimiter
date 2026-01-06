@@ -30,9 +30,7 @@ public class ServiceBootstrap implements ApplicationRunner {
                 serviceConfigProperties.getServices().forEach((serviceName, serviceConfig) -> {
                     serviceRegistry.registerService(serviceConfig);
                 });
-
-                log.info("Successfully registered {} services from application.yml",
-                        serviceRegistry.getServiceCount());
+                log.info("Successfully registered {} services from application.yml", serviceRegistry.getServiceCount());
                 logRegisteredServices();
             } else {
                 log.warn("No services found in application.yml");
@@ -44,11 +42,7 @@ public class ServiceBootstrap implements ApplicationRunner {
         }
     }
 
-    /**
-     * Log all registered services for debugging
-     */
     private void logRegisteredServices() {
-        log.info("===================== Registered Services =====================");
         serviceRegistry.getAllServices().forEach(service ->
                 log.info("Service: {} | Path: {} | Target: {} | Per-User: {} req/min | Global: {} req/sec",
                         service.getName(),
@@ -57,6 +51,5 @@ public class ServiceBootstrap implements ApplicationRunner {
                         service.getPerUserLimit(),
                         service.getGlobalLimit())
         );
-        log.info("==============================================================");
     }
 }

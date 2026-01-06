@@ -9,6 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import static org.apache.tomcat.util.http.Method.DELETE;
+import static org.apache.tomcat.util.http.Method.GET;
+import static org.apache.tomcat.util.http.Method.POST;
+import static org.apache.tomcat.util.http.Method.PUT;
+
 @Slf4j
 @Service
 public class ProxyService {
@@ -49,45 +54,33 @@ public class ProxyService {
         }
     }
 
-    /**
-     * Forward the request to the backend service
-     */
     private Mono<ResponseEntity<Object>> forwardRequest(String targetUrl,
                                                         String httpMethod,
                                                         Object requestBody) {
         try {
-            switch (httpMethod.toUpperCase()) {
-                case "GET":
-                    return webClient.get()
-                            .uri(targetUrl)
-                            .retrieve()
-                            .toEntity(Object.class);
-
-                case "POST":
-                    return webClient.post()
-                            .uri(targetUrl)
-                            .bodyValue(requestBody)
-                            .retrieve()
-                            .toEntity(Object.class);
-
-                case "PUT":
-                    return webClient.put()
-                            .uri(targetUrl)
-                            .bodyValue(requestBody)
-                            .retrieve()
-                            .toEntity(Object.class);
-
-                case "DELETE":
-                    return webClient.delete()
-                            .uri(targetUrl)
-                            .retrieve()
-                            .toEntity(Object.class);
-
-                default:
-                    return Mono.just(ResponseEntity
-                            .status(HttpStatus.METHOD_NOT_ALLOWED)
-                            .body((Object) "HTTP method not supported: " + httpMethod));
-            }
+            return switch (httpMethod.toUpperCase()) {
+                case GET -> webClient.get()
+                        .uri(targetUrl)
+                        .retrieve()
+                        .toEntity(Object.class);
+                case POST -> webClient.post()
+                        .uri(targetUrl)
+                        .bodyValue(requestBody)
+                        .retrieve()
+                        .toEntity(Object.class);
+                case PUT -> webClient.put()
+                        .uri(targetUrl)
+                        .bodyValue(requestBody)
+                        .retrieve()
+                        .toEntity(Object.class);
+                case DELETE -> webClient.delete()
+                        .uri(targetUrl)
+                        .retrieve()
+                        .toEntity(Object.class);
+                default -> Mono.just(ResponseEntity
+                        .status(HttpStatus.METHOD_NOT_ALLOWED)
+                        .body((Object) "HTTP method not supported: " + httpMethod));
+            };
         } catch (Exception e) {
             log.error("Failed to forward request to {}: {}", targetUrl, e.getMessage());
             return Mono.just(ResponseEntity
