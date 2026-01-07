@@ -46,8 +46,21 @@ jobs:
             # Create necessary directories
             mkdir -p /home/ec2-user/rate-limiter/logs
             
-            # Stop the service before replacing JAR
+            # Stop the service
             sudo systemctl stop rate-limiter
+            
+            # Wait for graceful shutdown (important!)
+            echo "Waiting for service to stop completely..."
+            sleep 10
+            
+            # Verify port is free
+            if sudo lsof -i :8080 > /dev/null 2>&1; then
+              echo "Port 8080 still in use, force killing..."
+              sudo fuser -k 8080/tcp
+              sleep 2
+            fi
+            
+            echo "Port 8080 is now free"
 
       # Step 6: Copy JAR to EC2
       - name: Copy JAR to EC2
@@ -89,7 +102,7 @@ jobs:
             # Show recent application logs
             echo ""
             echo "=== Recent Application Logs ==="
-            tail -n 30 /home/ec2-user/rate-limiter/logs/application.log
+            tail -n 30 /home/ec2-user/rate-limiter/logs/rate-limiter.log
 
       # Step 8: Verify deployment
       - name: Verify deployment
