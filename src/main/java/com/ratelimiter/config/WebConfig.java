@@ -21,7 +21,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor)
                 // Apply to these patterns
                 .addPathPatterns(
-                        "/api/**"
+                        "/api/**",
+                        "/gateway/**"
                 )
                 // Exclude these patterns (no rate limiting)
                 .excludePathPatterns("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/error","/admin/rate-limiter");

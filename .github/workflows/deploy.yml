@@ -1,6 +1,5 @@
 name: Deploy Rate Limiter Manually
 
-# Manual trigger
 on:
   workflow_dispatch:
     inputs:
@@ -14,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout selected branch
+      # Step 1: Checkout code from selected branch
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
@@ -27,31 +26,99 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # Step 3: Make mvnw executable
       - name: Make mvnw executable
         run: chmod +x ./mvnw
 
-      # Step 3: Build project
+      # Step 4: Build the project
       - name: Build project
-        run: ./mvnw clean package
+        run: ./mvnw clean package -DskipTests
 
-      # Step 4: Copy JAR to EC2
+      # Step 5: Prepare EC2 directories
+      - name: Prepare EC2 directories
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          script: |
+            # Create necessary directories
+            mkdir -p /home/ec2-user/rate-limiter/logs
+            
+            # Stop the service
+            sudo systemctl stop rate-limiter
+            
+            # Wait for graceful shutdown (important!)
+            echo "Waiting for service to stop completely..."
+            sleep 10
+            
+            # Verify port is free
+            if sudo lsof -i :8080 > /dev/null 2>&1; then
+              echo "Port 8080 still in use, force killing..."
+              sudo fuser -k 8080/tcp
+              sleep 2
+            fi
+            
+            echo "Port 8080 is now free"
+
+      # Step 6: Copy JAR to EC2
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_KEY }}
-          source: target/distributed-rate-limiter-*.jar   # ← use wildcard
+          source: target/distributed-rate-limiter-*.jar
           target: /home/ec2-user/rate-limiter/
+          strip_components: 1
           port: 22
 
-      # Step 5: Restart service on EC2
-      - name: Restart service on EC2
+      # Step 7: Deploy and restart service
+      - name: Deploy and restart service
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_KEY }}
+          port: 22
           script: |
-            pkill -f rate-limiter.jar || true
-            nohup java -jar /home/ec2-user/rate-limiter/rate-limiter.jar > /home/ec2-user/rate-limiter/service.log 2>&1 &
+            # Rename JAR to app.jar
+            mv /home/ec2-user/rate-limiter/distributed-rate-limiter-*.jar /home/ec2-user/rate-limiter/app.jar
+            
+            # Make sure ec2-user owns everything
+            sudo chown -R ec2-user:ec2-user /home/ec2-user/rate-limiter
+            
+            # Start the service
+            sudo systemctl start rate-limiter
+            
+            # Wait for service to start
+            sleep 5
+            
+            # Check service status
+            echo "=== Service Status ==="
+            sudo systemctl status rate-limiter --no-pager
+            
+            # Show recent application logs
+            echo ""
+            echo "=== Recent Application Logs ==="
+            tail -n 30 /home/ec2-user/rate-limiter/logs/rate-limiter.log
+
+      # Step 8: Verify deployment
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          script: |
+            # Check if service is active
+            if sudo systemctl is-active --quiet rate-limiter; then
+              echo "✅ Service is running successfully!"
+            else
+              echo "❌ Service failed to start!"
+              echo "=== Checking logs for errors ==="
+              sudo journalctl -u rate-limiter -n 50 --no-pager
+              exit 1
+            fi
