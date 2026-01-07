@@ -4,10 +4,13 @@
     <property name="LOG_PATH" value="${LOG_PATH:-/home/ec2-user/rate-limiter/logs}"/>
     <property name="APP_NAME" value="rate-limiter"/>
 
+    <!-- Timestamp configuration with IST timezone -->
+    <timestamp key="byDate" datePattern="yyyy-MM-dd" timeReference="Asia/Kolkata"/>
+
     <!-- Console Appender - for viewing logs in real-time -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}{Asia/Kolkata} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Kolkata} [%thread] %-5level %logger{36} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
@@ -18,14 +21,14 @@
         <file>${LOG_PATH}/${APP_NAME}.log</file>
 
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}{Asia/Kolkata} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Kolkata} [%thread] %-5level %logger{36} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
 
         <!-- Rolling policy - creates new file daily based on IST -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- Archive pattern: rate-limiter-2026-01-08.0.log (IST date) -->
-            <fileNamePattern>${LOG_PATH}/${APP_NAME}-%d{yyyy-MM-dd,Asia/Kolkata}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}-%d{yyyy-MM-dd, Asia/Kolkata}.%i.log</fileNamePattern>
 
             <!-- Trigger policy - roll when file size reaches 10MB -->
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
@@ -50,12 +53,12 @@
         </filter>
 
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}{Asia/Kolkata} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS, Asia/Kolkata} [%thread] %-5level %logger{36} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${APP_NAME}-error-%d{yyyy-MM-dd,Asia/Kolkata}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}-error-%d{yyyy-MM-dd, Asia/Kolkata}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>10MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
@@ -71,7 +74,7 @@
     </root>
 
     <!-- You can set specific package log levels -->
-    <logger name="com.yourpackage.ratelimiter" level="DEBUG"/>
+    <logger name="com.ratelimiter" level="DEBUG"/>
     <logger name="org.springframework.web" level="INFO"/>
     <logger name="org.hibernate" level="WARN"/>
 </configuration>
