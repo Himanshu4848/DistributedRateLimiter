@@ -5,7 +5,7 @@ spring:
 
   data:
     redis:
-      host: localhost
+      host: rate-limiting.qp3kc1.ng.0001.aps1.cache.amazonaws.com
       port: 6379
       timeout: 2s
       lettuce:
