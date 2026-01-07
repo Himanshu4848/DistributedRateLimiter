@@ -27,7 +27,7 @@ public class RateLimiterService {
     @Autowired
     private ServiceRegistry serviceRegistry;
 
-    // Configuration from application.properties
+    // Configuration from application.yml
     @Value("${rate-limiter.enabled:true}")
     private boolean rateLimiterEnabled;
 

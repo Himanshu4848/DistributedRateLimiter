@@ -13,7 +13,7 @@ import java.util.Map;
  */
 @Data
 @Component
-@ConfigurationProperties(prefix = "services")
+@ConfigurationProperties()
 public class ServiceConfigProperties {
 
     /**

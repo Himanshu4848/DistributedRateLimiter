@@ -35,7 +35,6 @@ public class ServiceBootstrap implements ApplicationRunner {
             } else {
                 log.warn("No services found in application.yml");
             }
-
         } catch (Exception e) {
             log.error("Error during service initialization: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to initialize services", e);

@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: distributed-rate-limiter
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2      # min idle connections
+
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+rate-limiter:
+  enabled: true
+  default-limit: 4
+  default-window-seconds: 60
+  global:
+    enabled: true
+    limit: 10
+    window-seconds: 60
+
+services:
+  user-service:
+    name: user-service
+    pathPrefix: /user-service
+    targetUrl: http://localhost:8081
+    stripPrefix: true
+    perUserLimit: 60
+    globalLimit: 1800
+
+  product-service:
+    name: product-service
+    pathPrefix: /product-service
+    targetUrl: http://localhost:8082
+    stripPrefix: true
+    perUserLimit: 100
+    globalLimit: 1000
+
+  order-service:
+    name: order-service
+    pathPrefix: /order-service
+    targetUrl: http://localhost:8083
+    stripPrefix: true
+    perUserLimit: 80
+    globalLimit: 700
+
+  payment-service:
+    name: payment-service
+    pathPrefix: /payment-service
+    targetUrl: http://localhost:8084
+    stripPrefix: true
+    perUserLimit: 30
+    globalLimit: 200
+
+  notification-service:
+    name: notification-service
+    pathPrefix: /notification
+    targetUrl: http://localhost:8085
+    stripPrefix: true
+    perUserLimit: 150
+    globalLimit: 2000
